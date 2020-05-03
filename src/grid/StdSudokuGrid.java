@@ -16,12 +16,9 @@ import java.io.*;
 public class StdSudokuGrid extends SudokuGrid {
 	// TODO: Add your own attributes
 	
-	private int[][] grid;
-	private int dimension;
-	private int[] values;
-	
-	
-	
+	public int[][] grid;
+	public int size;
+	public int[] values;
 
 	public StdSudokuGrid() {
 		super();
@@ -34,23 +31,47 @@ public class StdSudokuGrid extends SudokuGrid {
 	@Override
 	public void initGrid(String filename) throws FileNotFoundException, IOException {
 		try {
+			System.out.println("not gr");
 			BufferedReader reader = new BufferedReader(new FileReader(filename));
+			System.out.println("gr");
 			
 			String line;
 			
 			line = reader.readLine();
-			dimension = Integer.parseInt(line);
+			size = Integer.parseInt(line);
 			
+			values = new int[size];
+			grid = new int[size][size];
 			
-			dimension = 9;
-			grid = new int[dimension][dimension];
+			line = reader.readLine();
+			String[] strValues = line.split(" ");
 			
+			for (int i = 0; i < size; ++i) {
+				int valueToAdd = Integer.parseInt(strValues[i]);
+				values[i] = valueToAdd;
+			}
+			
+			while ((line = reader.readLine()) != null) {
+				String[] tokens = line.split(" ");
+				String[] tuple = tokens[0].split(",");
+				
+				int row = Integer.parseInt(tuple[0]);
+				int col = Integer.parseInt(tuple[1]);
+				
+				int value = Integer.parseInt(tokens[1]);
+				
+				grid[row][col] = value;
+			}
 
+			
+			reader.close();
 		} catch (FileNotFoundException ex) {
 			System.err.println(String.format("File: %s not found.", filename));
-		} catch (IOException e) {
+		} catch (IOException ioe) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ioe.printStackTrace();
+		} catch (NumberFormatException nfe) {
+			nfe.printStackTrace();
 		}
 		
 	} // end of initBoard()
@@ -59,22 +80,49 @@ public class StdSudokuGrid extends SudokuGrid {
 	@Override
 	public void outputGrid(String filename) throws FileNotFoundException, IOException {
 		// TODO
+		
+		try {
+			PrintWriter outWriter = new PrintWriter(new FileWriter(filename), true);
+			outWriter.print(toString());
+			outWriter.close();
+			
+		} catch (FileNotFoundException ex) {
+			System.err.println(String.format("File: %s not found.", filename));
+		}
+		
 	} // end of outputBoard()
 
 	@Override
 	public String toString() {
 		// TODO
-
+		
+		String output = "";
+		
+		for (int row = 0; row < size; ++row) {
+			for (int col = 0; col < size; ++col) {
+				output += grid[row][col];
+			}
+			output += "\n";
+		}
+		
 		// placeholder
-		return String.valueOf("");
+		return output;
 	} // end of toString()
 
 	@Override
 	public boolean validate() {
 		// TODO
-
-		// placeholder
-		return false;
+		
+		// I think this only really works for backtracking so far. Though not sure, will have to check
+		for (int row = 0; row < size; ++row) {
+			for (int col = 0; col < size; ++col) {
+				if (grid[row][col] == 0) {
+					return false;
+				}
+			}
+		}
+		
+		return true;
 	} // end of validate()
 
 } // end of class StdSudokuGrid
