@@ -31,9 +31,7 @@ public class StdSudokuGrid extends SudokuGrid {
 	@Override
 	public void initGrid(String filename) throws FileNotFoundException, IOException {
 		try {
-			System.out.println("not gr");
 			BufferedReader reader = new BufferedReader(new FileReader(filename));
-			System.out.println("gr");
 			
 			String line;
 			
