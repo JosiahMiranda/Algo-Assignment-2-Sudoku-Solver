@@ -8,7 +8,7 @@ public class driver {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		
-		SudokuGrid grid = new KillerSudokuGrid();
+		SudokuGrid grid = new StdSudokuGrid();
 		
 		try {
 			grid.initGrid(args[0]);
