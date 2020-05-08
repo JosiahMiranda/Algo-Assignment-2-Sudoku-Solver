@@ -129,17 +129,26 @@ public class KillerSudokuGrid extends SudokuGrid {
 
 	@Override
 	public boolean validate() {
-		boolean solutionValid = true;
 
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
 				if (!validCell(row, col)) {
-					solutionValid = false;
+					return false;
 				}
 			}
 		}
+		
+		for (Cage cage : cages) {
+			int sum = 0;
+			for (Tuple tuple : cage.tuples) {
+				sum += grid[tuple.row][tuple.col];
+			}
+			if (sum != cage.sum) {
+				return false;
+			}
+		}
 
-		return solutionValid;
+		return true;
 	} // end of validate()
 
 	public boolean validCell(int row, int col) {
@@ -179,16 +188,6 @@ public class KillerSudokuGrid extends SudokuGrid {
 				} else {
 					valuesPresent.add(grid[r][c]);
 				}
-			}
-		}
-
-		for (Cage cage : cages) {
-			int sum = 0;
-			for (Tuple tuple : cage.tuples) {
-				sum += grid[tuple.row][tuple.col];
-			}
-			if (sum != cage.sum) {
-				return false;
 			}
 		}
 
