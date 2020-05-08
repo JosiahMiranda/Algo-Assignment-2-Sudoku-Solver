@@ -3,7 +3,16 @@
  */
 package grid;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+
+import solver.Cage;
+import solver.Tuple;
 
 /**
  * Class implementing the grid for Killer Sudoku. Extends SudokuGrid (hence
@@ -49,7 +58,7 @@ public class KillerSudokuGrid extends SudokuGrid {
 			int valueToAdd = Integer.parseInt(strValues[i]);
 			values[i] = valueToAdd;
 		}
-		
+
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
 				grid[row][col] = -1;
@@ -70,6 +79,8 @@ public class KillerSudokuGrid extends SudokuGrid {
 				int row = Integer.parseInt(strTuple[0]);
 				int col = Integer.parseInt(strTuple[1]);
 				Tuple tuple = new Tuple(row, col);
+
+				// i-1 because the tuples in the lines start at the 1st index not the 0th
 				tuples[i - 1] = tuple;
 			}
 			Cage cage = new Cage(sum, tuples);
@@ -118,44 +129,70 @@ public class KillerSudokuGrid extends SudokuGrid {
 
 	@Override
 	public boolean validate() {
-		// TODO
-		// I think this only really works for backtracking so far. Though not sure, will
-		// have to check
+		boolean solutionValid = true;
+
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
-				if (grid[row][col] == 0) {
-					return false;
+				if (!validCell(row, col)) {
+					solutionValid = false;
 				}
 			}
 		}
 
-		return true;
+		return solutionValid;
 	} // end of validate()
 
+	public boolean validCell(int row, int col) {
+		
+		int value = grid[row][col];
+
+		int numValues = 0;
+		for (int i = 0; i < size; i++) {
+			if (grid[row][i] == value) {
+				++numValues;
+			}
+			if (numValues > 1) {
+				return false;
+			}
+		}
+
+		numValues = 0;
+		for (int i = 0; i < size; i++) {
+			if (grid[i][col] == value) {
+				++numValues;
+			}
+			if (numValues > 1) {
+				return false;
+			}
+		}
+
+		int squareRoot = (int) Math.sqrt(size);
+		int blockRowStartIndex = row - row % squareRoot;
+		int blockColStartIndex = col - col % squareRoot;
+
+		ArrayList<Integer> valuesPresent = new ArrayList<Integer>();
+
+		for (int r = blockRowStartIndex; r < blockRowStartIndex + squareRoot; ++r) {
+			for (int c = blockColStartIndex; c < blockColStartIndex + squareRoot; ++c) {
+				if (valuesPresent.contains(grid[r][c])) {
+					return false;
+				} else {
+					valuesPresent.add(grid[r][c]);
+				}
+			}
+		}
+
+		for (Cage cage : cages) {
+			int sum = 0;
+			for (Tuple tuple : cage.tuples) {
+				sum += grid[tuple.row][tuple.col];
+			}
+			if (sum != cage.sum) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 } // end of class KillerSudokuGrid
-
-// Inner class for cages
-class Cage {
-
-	public int sum;
-	public Tuple[] tuples;
-
-	public Cage(int sum, Tuple[] tuples) {
-		this.sum = sum;
-		this.tuples = tuples;
-	}
-
-} // end of inner class Cage
-
-// Inner class for tuples
-
-class Tuple {
-
-	public int row;
-	public int col;
-
-	public Tuple(int row, int col) {
-		this.row = row;
-		this.col = col;
-	}
-} // end of inner class Tuple
