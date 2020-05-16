@@ -98,10 +98,13 @@ public class StdSudokuGrid extends SudokuGrid {
 		String output = "";
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
-				if (col == size - 1) {
+				if (grid[row][col] != -1) {
 					output += grid[row][col];
 				} else {
-					output += grid[row][col] + ",";
+					output += ".";
+				}
+				if (col != size - 1) {
+					output += ",";
 				}
 			}
 			output += "\n";
@@ -128,7 +131,7 @@ public class StdSudokuGrid extends SudokuGrid {
 	public boolean validCell(int row, int col) {
 
 		int value = grid[row][col];
-		
+
 		int numValues = 0;
 		for (int i = 0; i < size; i++) {
 			if (grid[row][i] == value) {

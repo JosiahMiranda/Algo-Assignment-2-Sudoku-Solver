@@ -114,16 +114,18 @@ public class KillerSudokuGrid extends SudokuGrid {
 		String output = "";
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
-				if (col == size - 1) {
+				if (grid[row][col] != -1) {
 					output += grid[row][col];
 				} else {
-					output += grid[row][col] + ",";
+					output += ".";
+				}
+				if (col != size - 1) {
+					output += ",";
 				}
 			}
 			output += "\n";
 		}
 
-		// placeholder
 		return output;
 	} // end of toString()
 
@@ -137,7 +139,7 @@ public class KillerSudokuGrid extends SudokuGrid {
 				}
 			}
 		}
-		
+
 		for (Cage cage : cages) {
 			int sum = 0;
 			for (Tuple tuple : cage.tuples) {
@@ -152,7 +154,7 @@ public class KillerSudokuGrid extends SudokuGrid {
 	} // end of validate()
 
 	public boolean validCell(int row, int col) {
-		
+
 		int value = grid[row][col];
 
 		int numValues = 0;
