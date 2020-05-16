@@ -9,10 +9,18 @@ package driver;
  * @author Jeffrey Chan & Minyi Li, RMIT 2020
  */
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
-import grid.*;
-import solver.*;
+import grid.KillerSudokuGrid;
+import grid.StdSudokuGrid;
+import grid.SudokuGrid;
+import solver.AlgorXSolver;
+import solver.BackTrackingSolver;
+import solver.DancingLinksSolver;
+import solver.KillerAdvancedSolver;
+import solver.KillerBackTrackingSolver;
+import solver.SudokuSolver;
 
 
 /**
