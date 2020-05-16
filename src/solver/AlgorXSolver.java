@@ -79,9 +79,10 @@ public class AlgorXSolver extends StdSudokuSolver {
 			for (Integer sol : partialSolution) {
 				int row = getActualRowFromRealRow(sol);
 				int col = getActualColFromRealRow(sol);
-				int val = getValIndexFromRealRow(sol);
+				// Have to minus one since array indexes start at 0
+				int valIndex = getValIndexFromRealRow(sol)-1;
 
-				intGrid[row][col] = val;
+				intGrid[row][col] = values[valIndex];
 			}
 			return true;
 		}
