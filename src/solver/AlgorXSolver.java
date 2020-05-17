@@ -60,15 +60,14 @@ public class AlgorXSolver extends StdSudokuSolver {
 
 		setInitialPartialSolution(uncoveredRows, uncoveredCols);
 	
-		if (sudokuSolve(uncoveredRows, uncoveredCols, solution, 0)) {
+		if (sudokuSolve(uncoveredRows, uncoveredCols, solution)) {
 			return true;
 		}
 
 		return false;
 	} // end of solve()
 
-	private boolean sudokuSolve(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, List<Integer> partialSolution,
-			int level) {
+	private boolean sudokuSolve(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, List<Integer> partialSolution) {
 
 		Integer solutionToAdd = null;
 
@@ -139,7 +138,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 
 
 					// Recursive step
-					if (sudokuSolve(partUncoveredRows, partUncoveredCols, partialSolution, level + 1)) {
+					if (sudokuSolve(partUncoveredRows, partUncoveredCols, partialSolution)) {
 						return true;
 					}
 
