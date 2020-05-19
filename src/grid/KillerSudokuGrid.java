@@ -10,6 +10,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import solver.Cage;
 import solver.Tuple;
@@ -45,30 +47,37 @@ public class KillerSudokuGrid extends SudokuGrid {
 
 		String line;
 
+		// Read in size
 		line = reader.readLine();
 		size = Integer.parseInt(line);
 
+		// prepare values and grid size
 		values = new int[size];
 		grid = new int[size][size];
 
+		// Read in line of values
 		line = reader.readLine();
 		String[] strValues = line.split(" ");
 
+		// Add each of these values to the values array
 		for (int i = 0; i < size; ++i) {
 			int valueToAdd = Integer.parseInt(strValues[i]);
 			values[i] = valueToAdd;
 		}
 
+		// Initially set all grid values to -1 to denote an empty space
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
 				grid[row][col] = -1;
 			}
 		}
 
+		// Read in number of cages and prepare array of cages
 		line = reader.readLine();
 		int numCages = Integer.parseInt(line);
 		cages = new Cage[numCages];
 
+		// Read in all cage information and create cages and tuples within cages
 		int counter = 0;
 		while ((line = reader.readLine()) != null) {
 			String[] tokens = line.split(" ");
@@ -96,6 +105,7 @@ public class KillerSudokuGrid extends SudokuGrid {
 	public void outputGrid(String filename) throws FileNotFoundException, IOException {
 		// TODO
 
+		// Just print the tostring
 		try {
 			PrintWriter outWriter = new PrintWriter(new FileWriter(filename), true);
 			outWriter.print(toString());
@@ -107,6 +117,7 @@ public class KillerSudokuGrid extends SudokuGrid {
 
 	} // end of outputBoard()
 
+	// Print out the grid. If it's empty, replace it with a '.' rather than a '-1'
 	@Override
 	public String toString() {
 		// TODO
@@ -129,9 +140,11 @@ public class KillerSudokuGrid extends SudokuGrid {
 		return output;
 	} // end of toString()
 
+	// Ensure that the entire grid is valid.
 	@Override
 	public boolean validate() {
 
+		// check that every row and column is valid
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
 				if (!validCell(row, col)) {
@@ -139,12 +152,19 @@ public class KillerSudokuGrid extends SudokuGrid {
 				}
 			}
 		}
-
+		
+		// Then check that every cage is valid
 		for (Cage cage : cages) {
 			int sum = 0;
+			Set<Integer> uniqueValues = new HashSet<Integer>();
 			for (Tuple tuple : cage.tuples) {
+				// if it fails to add a value then it's not unique and so invalid
+				if (!uniqueValues.add(grid[tuple.row][tuple.col])) {
+					return false;
+				}
 				sum += grid[tuple.row][tuple.col];
 			}
+			// If the sum at the end does not equal the cages sum then it is invalid
 			if (sum != cage.sum) {
 				return false;
 			}

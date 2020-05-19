@@ -1,11 +1,8 @@
-package solver;
 /*
  * @author Jeffrey Chan & Minyi Li, RMIT 2020
  */
+package solver;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,350 +14,377 @@ import grid.SudokuGrid;
 /**
  * Algorithm X solver for standard Sudoku.
  */
+
 public class AlgorXSolver extends StdSudokuSolver {
-	// TODO: Add attributes as needed.
 
-	int size;
+	// Variables that store grid information
+	private int size;
+	private int sizesq;
 	int[] values;
-	int numCols;
-	int numRows;
-
-	List<Integer> solution = new ArrayList<Integer>();
-	int[][] matrix;
-	List<Integer> coveredRows = new ArrayList<Integer>();
-	List<Integer> coveredCols = new ArrayList<Integer>();
-
 	int[][] intGrid;
 
+	// Variables that store the exact cover matrix information
+	int[][] matrix;
+	int numCols;
+	int numRows;
+	int boxSize;
+
+	// Variables that store the variables passed in for the alogithm x solve
+	List<Integer> solution;
+
+	// Using sets for these so that duplicates don't get added
+	Set<Integer> uncoveredRows;
+	Set<Integer> uncoveredCols;
+
 	public AlgorXSolver() {
-		// TODO: any initialisation you want to implement.
+
+		// Instantiate the collections that will be used throughout the solve
+		solution = new ArrayList<Integer>();
+		uncoveredRows = new HashSet<Integer>();
+		uncoveredCols = new HashSet<Integer>();
 
 	} // end of AlgorXSolver()
 
 	@Override
 	public boolean solve(SudokuGrid grid) {
-		// TODO: your implementation of the Algorithm X solver for standard Sudoku.
 
+		// Defining all of the variables that will be used
 		StdSudokuGrid stdGrid = (StdSudokuGrid) grid;
 		size = stdGrid.size;
+		sizesq = (size * size);
 		values = stdGrid.values;
 		intGrid = stdGrid.grid;
 
-		numCols = (size * size) * 4;
-		numRows = (size * size * size);
+		// Setting up matrix sizes. An exact cover matrix for sudoku puzzle of size n
+		// will always have
+		// a number of rows that is size^3 and a number of columns that is (n^2) * 4.
+		numRows = size * size * size;
+		numCols = sizesq * 4;
+		boxSize = (int) Math.sqrt(size);
 
 		matrix = new int[numRows][numCols];
 
-		fillInitialConstraints();
+		// Method for creating the matrix using patterns.
+		createMatrix();
 
-		Set<Integer> uncoveredRows = new HashSet<Integer>();
-		Set<Integer> uncoveredCols = new HashSet<Integer>();
+		// Make the uncoveredRows and uncoveredCols sets filled with all of the rows and
+		// columns at the start,
+		// since at the start we want to consider all of them.
+		fillUncoveredSets();
 
-		fillUncoveredLists(uncoveredRows, uncoveredCols);
+		// Then take in the values of the grid and create the partial solution based off
+		// of the choices already made
+		// in the sudoku puzzle
+		setInitialPartialSolution();
 
-		setInitialPartialSolution(uncoveredRows, uncoveredCols);
-	
+		// The solve method initial call. Pass in the first instance of the sets and
+		// solution.
 		if (sudokuSolve(uncoveredRows, uncoveredCols, solution)) {
 			return true;
 		}
 
+		// if this is reached, no solution could be found
 		return false;
 	} // end of solve()
 
-	private boolean sudokuSolve(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, List<Integer> partialSolution) {
-
-		Integer solutionToAdd = null;
-
-		// If the matrix is empty, return true. This is a valid solution
-		if (uncoveredCols.size() == 0) {
-
-			// Placing the solution into the grid
-			for (Integer sol : partialSolution) {
-				int row = getActualRowFromRealRow(sol);
-				int col = getActualColFromRealRow(sol);
-				// Have to minus one since array indexes start at 0
-				int valIndex = getValIndexFromRealRow(sol)-1;
-
-				intGrid[row][col] = values[valIndex];
-			}
-			return true;
-		}
-
-		// Choose the column with the least amount of ones left in the matrix
-		Integer column = columnWithLeastOnes(uncoveredRows, uncoveredCols);
-
-
-		// if the column only has zeros left then return false
-		if (onlyZerosLeft(column, uncoveredRows)) {
-			return false;
-		} else {
-
-			// Then choose a row for that column where there is a 1
-			for (Integer row : uncoveredRows) {
-				if (matrix[row][column] == 1) {
-
-
-					Set<Integer> rowsRemovedThisCall = new HashSet<Integer>();
-					Set<Integer> colsRemovedThisCall = new HashSet<Integer>();
-
-					// Add this row to the partial solution
-					solutionToAdd = row;
-					partialSolution.add(solutionToAdd);
-
-					// Now loop through the columns to find all the columns in that row with a 1
-					for (Integer col : uncoveredCols) {
-						if (matrix[row][col] == 1) {
-
-							colsRemovedThisCall.add(col);
-
-							for (Integer otherRow : uncoveredRows) {
-								if (matrix[otherRow][col] == 1) {
-									rowsRemovedThisCall.add(otherRow);
-								}
-							}
-
-						}
-					}
-
-					// Edited lists to be used in the next call
-					Set<Integer> partUncoveredRows = new HashSet<Integer>(uncoveredRows);
-					Set<Integer> partUncoveredCols = new HashSet<Integer>(uncoveredCols);
-
-					// Covering the rows for the next list to be used in recursive step
-					for (Integer r : rowsRemovedThisCall) {
-						partUncoveredRows.remove(r);
-					}
-
-					// Covering the cols for the next list to be used in recursive step
-					for (Integer c : colsRemovedThisCall) {
-						partUncoveredCols.remove(c);
-					}
-
-
-					// Recursive step
-					if (sudokuSolve(partUncoveredRows, partUncoveredCols, partialSolution)) {
-						return true;
-					}
-
-					// if this gets reached then we reached a deadend. Need to do undo changes.
-
-					partialSolution.remove(solutionToAdd);
-
-				}
-			}
-
-			return false;
-		}
-
-	}
-
-	private void fillUncoveredLists(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols) {
-		for (int row = 0; row < numRows; ++row) {
+	private void fillUncoveredSets() {
+		for (int row = 0; row < numRows; row++) {
 			uncoveredRows.add(row);
 		}
 
-		for (int col = 0; col < numCols; ++col) {
+		for (int col = 0; col < numCols; col++) {
 			uncoveredCols.add(col);
 		}
 	}
 
-	private boolean onlyZerosLeft(int column, Set<Integer> uncoveredRows) {
+	private void setInitialPartialSolution() {
+		for (int row = 0; row < size; row++) {
+			for (int col = 0; col < size; col++) {
+				if (intGrid[row][col] != -1) {
 
-		for (Integer row : uncoveredRows) {
-			if (matrix[row][column] == 1) {
-				return false;
+					// for all the values that are not empty in the grid, add them into the partial
+					// solution
+					int valueIndex = getValueIndex(intGrid[row][col]);
+					int realRowIndex = getRealRowIndex(row, col, valueIndex);
+					solution.add(realRowIndex);
+
+					// Also remove them from the uncoveredRows and uncoveredCols sets because they
+					// should be
+					// 'deleted' from the matrix that is being used for the recursive solve.
+					for (int matrixCol = 0; matrixCol < numCols; matrixCol++) {
+						if (matrix[realRowIndex][matrixCol] == 1) {
+							for (int innerRow = 0; innerRow < numRows; innerRow++) {
+
+								if (matrix[innerRow][matrixCol] == 1) {
+									uncoveredRows.remove(innerRow);
+								}
+							}
+							uncoveredCols.remove(matrixCol);
+						}
+					}
+				}
 			}
 		}
-
-		return true;
 	}
-	
-	private int columnWithLeastOnes(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols) {
-		int column = -1;
+
+	// THE SOLVE METHOD THAT TOOK ME LITERAL DAYS TO GET WORKING IF THIS SCREWS UP
+	// IM GONNA FLIP
+	private boolean sudokuSolve(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, List<Integer> partialSolution) {
+
+		// The solution is an array of integers, that stores the rows of the matrix
+		// corresponding to the choices in the
+		// sudoku. Thus we will keep track of a solution to add via this variable.
+		Integer solutionToAdd = null;
+
+		// Base case. If the uncovered cols size is 0 then the matrix being worked with
+		// is empty so return true.
+		if (uncoveredCols.size() == 0) {
+
+			// Translate partial solution matrix rows into actual rows, columns, and values
+			// in the grid.
+			for (Integer solutionIndex : partialSolution) {
+
+				int row = getActualRowFromRealRow(solutionIndex);
+				int col = getActualColFromRealRow(solutionIndex);
+				int valueIndex = getValIndexFromRealRow(solutionIndex);
+
+				intGrid[row][col] = values[valueIndex];
+			}
+			return true;
+		}
+
+		Integer column = columnLeastOnes(uncoveredRows, uncoveredCols);
+
+		// Choose a row in the matrix
+		for (Integer row : uncoveredRows) {
+			if (matrix[row][column] == 1) {
+				// We keep track of the rows and columns we remove
+				Set<Integer> rowsRemovedThisCall = new HashSet<Integer>();
+				Set<Integer> colsRemovedThisCall = new HashSet<Integer>();
+
+				// And add the row to the partial solution
+				solutionToAdd = row;
+				partialSolution.add(solutionToAdd);
+
+				// for all columns in that row that have a 1 in them, remove it
+				for (Integer col : uncoveredCols) {
+					if (matrix[row][col] == 1) {
+						colsRemovedThisCall.add(col);
+
+						// also remove all of the rows in those columns that have a 1 in them
+						for (Integer otherRow : uncoveredRows) {
+							if (matrix[otherRow][col] == 1) {
+								rowsRemovedThisCall.add(otherRow);
+							}
+						}
+					}
+				}
+
+				// Create new sets that will be passed in, that are the result of this recursive
+				// call
+				Set<Integer> partUncoveredRows = new HashSet<Integer>(uncoveredRows);
+				Set<Integer> partUncoveredCols = new HashSet<Integer>(uncoveredCols);
+
+				// Remove the rows
+				for (Integer rowRemoved : rowsRemovedThisCall) {
+					partUncoveredRows.remove(rowRemoved);
+				}
+
+				// Remove the columns
+				for (Integer colRemoved : colsRemovedThisCall) {
+					partUncoveredCols.remove(colRemoved);
+				}
+
+				// Do the recursive step with the reduced rows and columns of the matrix. Also
+				// pass in the solution
+				if (sudokuSolve(partUncoveredRows, partUncoveredCols, partialSolution)) {
+					return true;
+				}
+
+				// If this is reached, then this recursive call was incorrect. Remove the added
+				// Integer from the partial solution.
+				partialSolution.remove(solutionToAdd);
+			}
+		}
+		return false;
+	}
+
+	// Method that finds the column with the least number of ones. Used because the
+	// algorithm states it is more efficient
+	// this way.
+	private int columnLeastOnes(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols) {
+		int columnToReturn = -1;
 		int min = numRows;
-		
-		// Iterate through every column
+
 		for (Integer col : uncoveredCols) {
 			int count = 0;
 			for (Integer row : uncoveredRows) {
 				count += matrix[row][col];
 			}
-			
-			// If the number of 1s is less than the min, then set the minimum to the count and assign the column
+
 			if (count < min) {
 				min = count;
-				column = col;
-			}
-		}
-		
-		return column;
-	}
-
-	// for testing
-	private void testWithUncovered(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, String fileName) {
-		System.out.println("testing with uncovered rows and columns");
-
-		String outputString = "Columns:";
-
-		for (Integer c : uncoveredCols) {
-			outputString += c + "\t";
-		}
-		outputString += "\n";
-
-		for (Integer r : uncoveredRows) {
-			outputString += r + ":\t";
-			for (Integer c : uncoveredCols) {
-				outputString += matrix[r][c] + "\t";
-			}
-			outputString += "\n";
-		}
-
-		try {
-			PrintWriter outWriter = new PrintWriter(new FileWriter(fileName), true);
-			outWriter.print(outputString);
-			outWriter.close();
-
-		} catch (IOException ex) {
-			System.err.println(String.format("File: %s not found."));
-		}
-	}
-
-	// for testing
-	private void testFile() {
-		System.out.println("test file");
-		String outputString = "";
-		for (int row = 0; row < numRows; ++row) {
-			for (int col = 0; col < numCols; ++col) {
-
-//				System.out.println("On row " + row + ", col " + col);
-				if (coveredRows.contains(row) || coveredCols.contains(col)) {
-					outputString += ". ";
-				} else {
-					outputString += matrix[row][col] + " ";
-				}
-			}
-			outputString += "\n";
-		}
-
-		try {
-			PrintWriter outWriter = new PrintWriter(new FileWriter("test.txt"), true);
-			outWriter.print(outputString);
-			outWriter.close();
-
-		} catch (IOException ex) {
-			System.err.println(String.format("File: %s not found."));
-		}
-
-	}
-
-	private void setInitialPartialSolution(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols) {
-		for (int row = 0; row < size; ++row) {
-			for (int col = 0; col < size; ++col) {
-				// Covering all the initial values inside of the grid already
-				if (intGrid[row][col] != -1) {
-					// When we find a value, we get its value index for the formulas and then
-					// proceed to cover them
-					int valueIndex = getValIndex(intGrid[row][col]);
-					// Have to plus one because grid row and col start at 0 whereas formula starts
-					// at 1
-					int realRowIndex = realRowIndex(row + 1, col + 1, valueIndex, size);
-					solution.add(realRowIndex);
-
-					// Iterate through every column
-					for (int c = 0; c < numCols; ++c) {
-
-						// Find the value of the row, in this case the real row index. If its one loop
-						// through
-						if (!coveredCols.contains(c) && matrix[realRowIndex][c] == 1) {
-
-							if (!coveredRows.contains(realRowIndex)) {
-
-								// and if a row's value is one, then cover it
-								for (int rowIn = 0; rowIn < numRows; ++rowIn) {
-
-									if (!coveredRows.contains(rowIn) && matrix[rowIn][c] == 1) {
-										coveredRows.add(rowIn);
-										uncoveredRows.remove(rowIn);
-									}
-								}
-							}
-							coveredCols.add(c);
-							uncoveredCols.remove(c);
-						}
-					}
-				}
+				columnToReturn = col;
 			}
 		}
 
+		return columnToReturn;
 	}
 
-	private void fillInitialConstraints() {
-		for (int row = 1; row <= size; ++row) {
-			for (int col = 1; col <= size; ++col) {
-				for (int value = 1; value <= size; ++value) {
-					int matrixRow = realRowIndex(row, col, value, size);
-					matrix[matrixRow][getCellConstraintIndex(row, col, value, size)] = 1;
-					matrix[matrixRow][getRowConstraintIndex(row, col, value, size)] = 1;
-					matrix[matrixRow][getColumnConstraintIndex(row, col, value, size)] = 1;
-					matrix[matrixRow][getBlockConstraintIndex(row, col, value, size)] = 1;
-				}
-			}
-
-		}
+	// Method that takes in a row, column, and value index of a sudoku grid
+	// possibility and then translates it
+	// into a row index inside of the exact cover matrix.
+	private int getRealRowIndex(int row, int col, int valueIndex) {
+		int realRowIndex = sizesq * row + size * col + valueIndex;
+		return realRowIndex;
 	}
 
+	// Method that takes in a row from the exact cover matrix and translates it into
+	// the value index of
+	// that corresponding row
 	private int getValIndexFromRealRow(int realRowIndex) {
-		int valIndex = (realRowIndex % size) + 1;
+		int valIndex = realRowIndex % size;
 		return valIndex;
 	}
 
+	// Method that takes in a row from the exact cover matrix and translates it into
+	// the actual row in the sudoku grid.
 	private int getActualRowFromRealRow(int realRowIndex) {
-		int actualRow = (int) Math.floor((realRowIndex) / (size * size));
+		int actualRow = (int) Math.floor(realRowIndex / sizesq);
 		return actualRow;
 	}
 
+	// Method that takes in a row from the exact cover matrix and translates it into
+	// the actual column in the sudoku grid.
 	private int getActualColFromRealRow(int realRowIndex) {
-		int innerFloor = ((int) Math.floor((realRowIndex / (size * size))) * (size * size));
-		int actualCol = (int) Math.floor((realRowIndex - innerFloor) / size);
+		int innerfloor = ((int) Math.floor(realRowIndex / sizesq) * sizesq);
+		int actualCol = (int) Math.floor((realRowIndex - innerfloor) / size);
 		return actualCol;
 	}
 
-	// have to return index + 1 for the way my formula is
-	private int getValIndex(int value) {
-		for (int i = 0; i < size; ++i) {
+	// Returns the index of the value in the value array. Useful for using our
+	// formulas to deduct the row, col, and value, of
+	// a row in the matrix.
+	private int getValueIndex(int value) {
+		for (int i = 0; i < size; i++) {
 			if (values[i] == value) {
-				return i + 1;
+				return i;
 			}
 		}
-
 		return 0;
 	}
 
-	private int getCellConstraintIndex(int row, int col, int valueIndex, int size) {
-		int matrixColumnIndex = size * row - (size - col) - 1;
-		return matrixColumnIndex;
+	// METHODS FOR CREATION OF EXACT COVER MATRIX
+
+	private void createMatrix() {
+
+		// Filling in the portion of the matrix that has to do with the cell constraints
+		fillCellConstraintPart();
+
+		// Filling in the portion of the matrix that has to do with the row constraints
+		fillRowConstraintPart();
+
+		// Filling in the portion of the matrix that has to do with the column
+		// constraints
+		fillColumnConstraintPart();
+
+		// Filling in the portion of the matrix that has to do with the box constraints
+		fillBoxConstraintPart();
+
 	}
 
-	private int getRowConstraintIndex(int row, int col, int valueIndex, int size) {
-		int matrixColumnIndex = (size * size) + (size * (row - 1)) + valueIndex - 1;
-		return matrixColumnIndex;
+	public void fillCellConstraintPart() {
+		int column = 0;
+		for (int rowStart = 0; rowStart < numRows; rowStart += size) {
+			addCellConstraint(column, rowStart);
+			column++;
+		}
 	}
 
-	private int getColumnConstraintIndex(int row, int col, int valueIndex, int size) {
-		int matrixColumnIndex = 2 * (size * size) + (size * (col - 1)) + valueIndex - 1;
-		return matrixColumnIndex;
+	public void addCellConstraint(int column, int rowStart) {
+		for (int i = rowStart; i < rowStart + size; i++) {
+			matrix[i][column] = 1;
+		}
 	}
 
-	private int getBlockConstraintIndex(int row, int col, int valueIndex, int size) {
-		double sqrt = Math.sqrt(size);
-		int block = (int) ((sqrt * Math.floor((row - 1) / sqrt)) + Math.ceil(col / sqrt));
-		int matrixColumnIndex = 3 * (size * size) + (block - 1) * size + valueIndex - 1;
-		return matrixColumnIndex;
+	public void fillRowConstraintPart() {
+		int startOfColumns = sizesq;
+
+		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
+			addRowConstraint(startOfColumns, startOfRows);
+			startOfColumns += size;
+		}
 	}
 
-	private int realRowIndex(int row, int col, int valueIndex, int size) {
-		int index = size * size * (row - 1) + size * (col - 1) + valueIndex - 1;
-		return index;
+	public void addRowConstraint(int startOfColumns, int startOfRows) {
+		int column = startOfColumns;
+		int maxNumRow = startOfRows + sizesq;
+		int maxNumCol = startOfColumns + size;
+
+		for (int i = startOfRows; i < maxNumRow; ++i) {
+			if (startOfColumns == maxNumCol) {
+				startOfColumns = column;
+			}
+
+			matrix[i][startOfColumns] = 1;
+			startOfColumns++;
+		}
+	}
+
+	public void fillColumnConstraintPart() {
+		int startOfColumns = sizesq * 2;
+
+		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
+			addColumnConstraint(startOfColumns, startOfRows);
+		}
+	}
+
+	public void addColumnConstraint(int startOfColumns, int startOfRows) {
+		int maxNumCol = startOfColumns + sizesq;
+		for (int i = startOfColumns; i < maxNumCol; ++i) {
+			matrix[startOfRows][i] = 1;
+			startOfRows++;
+		}
+	}
+
+	public void fillBoxConstraintPart() {
+
+		int startOfColumns = sizesq * 3;
+		int startOfRows = 0;
+		int increment = sizesq * boxSize;
+
+		for (int i = 0; i < numRows; i += increment) {
+			for (int j = 0; j < boxSize; j++) {
+				addBoxConstraint(startOfColumns, startOfRows);
+
+				startOfRows += sizesq;
+			}
+
+			startOfColumns += (size * boxSize);
+		}
+	}
+
+	public void addBoxConstraint(int startOfColumns, int startOfRows) {
+		int column = startOfColumns;
+		int maxNumRow = startOfRows + sizesq;
+		int maxNumCol = startOfColumns + size;
+		int count = 0;
+		for (int i = startOfRows; i < maxNumRow; ++i) {
+			if (startOfColumns == maxNumCol) {
+				startOfColumns = column;
+				count++;
+			}
+
+			if (count >= boxSize) {
+				startOfColumns += size;
+				column = startOfColumns;
+				maxNumCol = startOfColumns + size;
+				count = 0;
+			}
+
+			matrix[i][startOfColumns] = 1;
+			startOfColumns++;
+		}
 	}
 
 } // end of class AlgorXSolver
