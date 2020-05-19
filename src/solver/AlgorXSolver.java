@@ -155,6 +155,11 @@ public class AlgorXSolver extends StdSudokuSolver {
 
 		Integer column = columnLeastOnes(uncoveredRows, uncoveredCols);
 
+		// Base case. If the column only has zeroes left then its invalid. Return false.
+		if (onlyZeroesLeft(column, uncoveredRows)) {
+			return false;
+		}
+		
 		// Choose a row in the matrix
 		for (Integer row : uncoveredRows) {
 			if (matrix[row][column] == 1) {
@@ -207,6 +212,18 @@ public class AlgorXSolver extends StdSudokuSolver {
 			}
 		}
 		return false;
+	}
+	
+	// Check if there are only zeroes in the supplied column
+	private boolean onlyZeroesLeft(int column, Set<Integer> uncoveredRows) {
+		
+		for (Integer row : uncoveredRows) {
+			if (matrix[row][column] == 1) {
+				return false;
+			}
+		}
+		
+		return true;
 	}
 
 	// Method that finds the column with the least number of ones. Used because the
@@ -279,21 +296,21 @@ public class AlgorXSolver extends StdSudokuSolver {
 	private void createMatrix() {
 
 		// Filling in the portion of the matrix that has to do with the cell constraints
-		fillCellConstraintPart();
+		fillRowColumnConstraintPart();
 
 		// Filling in the portion of the matrix that has to do with the row constraints
-		fillRowConstraintPart();
+		fillRowValueConstraintPart();
 
 		// Filling in the portion of the matrix that has to do with the column
 		// constraints
-		fillColumnConstraintPart();
+		fillColumnValueConstraintPart();
 
 		// Filling in the portion of the matrix that has to do with the box constraints
-		fillBoxConstraintPart();
+		fillBoxValueConstraintPart();
 
 	}
 
-	public void fillCellConstraintPart() {
+	public void fillRowColumnConstraintPart() {
 		int column = 0;
 		for (int rowStart = 0; rowStart < numRows; rowStart += size) {
 			addCellConstraint(column, rowStart);
@@ -307,7 +324,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 	}
 
-	public void fillRowConstraintPart() {
+	public void fillRowValueConstraintPart() {
 		int startOfColumns = sizesq;
 
 		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
@@ -331,7 +348,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 	}
 
-	public void fillColumnConstraintPart() {
+	public void fillColumnValueConstraintPart() {
 		int startOfColumns = sizesq * 2;
 
 		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
@@ -347,7 +364,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 	}
 
-	public void fillBoxConstraintPart() {
+	public void fillBoxValueConstraintPart() {
 
 		int startOfColumns = sizesq * 3;
 		int startOfRows = 0;
