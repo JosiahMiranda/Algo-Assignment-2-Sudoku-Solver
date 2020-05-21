@@ -1,10 +1,4 @@
-/driver/
-/solver/
-/44-02.in
-/44easy.in
-/almostdone-99-1.in
-/done-99.in
-/easy-std-44-01.in
-/new-test-44.in
-/grid/
+/RmitSudoku$SolverGridPair.class
+/RmitSudoku.class
 /sampleGames/
+/solver/

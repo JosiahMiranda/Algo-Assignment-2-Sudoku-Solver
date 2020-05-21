@@ -30,7 +30,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 	int boxSize;
 
 	// Variables that store the variables passed in for the alogithm x solve
-	List<Integer> solution;
+	Set<Integer> solution;
 
 	// Using sets for these so that duplicates don't get added
 	Set<Integer> uncoveredRows;
@@ -39,7 +39,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 	public AlgorXSolver() {
 
 		// Instantiate the collections that will be used throughout the solve
-		solution = new ArrayList<Integer>();
+		solution = new HashSet<Integer>();
 		uncoveredRows = new HashSet<Integer>();
 		uncoveredCols = new HashSet<Integer>();
 
@@ -129,7 +129,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 
 	// THE SOLVE METHOD THAT TOOK ME LITERAL DAYS TO GET WORKING IF THIS SCREWS UP
 	// IM GONNA FLIP
-	private boolean sudokuSolve(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, List<Integer> partialSolution) {
+	private boolean sudokuSolve(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, Set<Integer> partialSolution) {
 
 		// The solution is an array of integers, that stores the rows of the matrix
 		// corresponding to the choices in the
@@ -154,11 +154,6 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 
 		Integer column = columnLeastOnes(uncoveredRows, uncoveredCols);
-
-		// Base case. If the column only has zeroes left then its invalid. Return false.
-		if (onlyZeroesLeft(column, uncoveredRows)) {
-			return false;
-		}
 		
 		// Choose a row in the matrix
 		for (Integer row : uncoveredRows) {
@@ -212,18 +207,6 @@ public class AlgorXSolver extends StdSudokuSolver {
 			}
 		}
 		return false;
-	}
-	
-	// Check if there are only zeroes in the supplied column
-	private boolean onlyZeroesLeft(int column, Set<Integer> uncoveredRows) {
-		
-		for (Integer row : uncoveredRows) {
-			if (matrix[row][column] == 1) {
-				return false;
-			}
-		}
-		
-		return true;
 	}
 
 	// Method that finds the column with the least number of ones. Used because the

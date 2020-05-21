@@ -1,4 +1,3 @@
-package driver;
 /*
  * This is the main java file for assignment 2 of RMIT Algorithms & Analysis,
  * 2020 semester 1.
