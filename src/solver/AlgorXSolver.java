@@ -3,9 +3,7 @@
  */
 package solver;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import grid.StdSudokuGrid;
@@ -20,21 +18,21 @@ public class AlgorXSolver extends StdSudokuSolver {
 	// Variables that store grid information
 	private int size;
 	private int sizesq;
-	int[] values;
-	int[][] intGrid;
+	private int[] values;
+	private int[][] intGrid;
 
 	// Variables that store the exact cover matrix information
-	int[][] matrix;
-	int numCols;
-	int numRows;
-	int boxSize;
+	private int[][] exactCoverMatrix;
+	private int numCols;
+	private int numRows;
+	private int boxSize;
 
 	// Variables that store the variables passed in for the alogithm x solve
-	Set<Integer> solution;
+	private Set<Integer> solution;
 
 	// Using sets for these so that duplicates don't get added
-	Set<Integer> uncoveredRows;
-	Set<Integer> uncoveredCols;
+	private Set<Integer> uncoveredRows;
+	private Set<Integer> uncoveredCols;
 
 	public AlgorXSolver() {
 
@@ -62,7 +60,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 		numCols = sizesq * 4;
 		boxSize = (int) Math.sqrt(size);
 
-		matrix = new int[numRows][numCols];
+		exactCoverMatrix = new int[numRows][numCols];
 
 		// Method for creating the matrix using patterns.
 		createMatrix();
@@ -78,15 +76,11 @@ public class AlgorXSolver extends StdSudokuSolver {
 		setInitialPartialSolution();
 
 		// The solve method initial call. Pass in the first instance of the sets and
-		// solution.
-		if (sudokuSolve(uncoveredRows, uncoveredCols, solution)) {
-			return true;
-		}
-
-		// if this is reached, no solution could be found
-		return false;
+		// solution. Return its outcome, either true or false.
+		return sudokuSolve(uncoveredRows, uncoveredCols, solution);
 	} // end of solve()
 
+	// at the beginning, all of the rows and columns should not be covered yet.
 	private void fillUncoveredSets() {
 		for (int row = 0; row < numRows; row++) {
 			uncoveredRows.add(row);
@@ -97,6 +91,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 	}
 
+	// Covering all of the columns and rows that should be covered due to the initial grid.
 	private void setInitialPartialSolution() {
 		for (int row = 0; row < size; row++) {
 			for (int col = 0; col < size; col++) {
@@ -112,10 +107,10 @@ public class AlgorXSolver extends StdSudokuSolver {
 					// should be
 					// 'deleted' from the matrix that is being used for the recursive solve.
 					for (int matrixCol = 0; matrixCol < numCols; matrixCol++) {
-						if (matrix[realRowIndex][matrixCol] == 1) {
+						if (exactCoverMatrix[realRowIndex][matrixCol] == 1) {
 							for (int innerRow = 0; innerRow < numRows; innerRow++) {
 
-								if (matrix[innerRow][matrixCol] == 1) {
+								if (exactCoverMatrix[innerRow][matrixCol] == 1) {
 									uncoveredRows.remove(innerRow);
 								}
 							}
@@ -129,12 +124,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 
 	// THE SOLVE METHOD THAT TOOK ME LITERAL DAYS TO GET WORKING IF THIS SCREWS UP
 	// IM GONNA FLIP
-	private boolean sudokuSolve(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, Set<Integer> partialSolution) {
-
-		// The solution is an array of integers, that stores the rows of the matrix
-		// corresponding to the choices in the
-		// sudoku. Thus we will keep track of a solution to add via this variable.
-		Integer solutionToAdd = null;
+	private boolean sudokuSolve(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, Set<Integer> partialSolution) {		
 
 		// Base case. If the uncovered cols size is 0 then the matrix being worked with
 		// is empty so return true.
@@ -157,23 +147,26 @@ public class AlgorXSolver extends StdSudokuSolver {
 		
 		// Choose a row in the matrix
 		for (Integer row : uncoveredRows) {
-			if (matrix[row][column] == 1) {
+			if (exactCoverMatrix[row][column] == 1) {
 				// We keep track of the rows and columns we remove
 				Set<Integer> rowsRemovedThisCall = new HashSet<Integer>();
 				Set<Integer> colsRemovedThisCall = new HashSet<Integer>();
 
-				// And add the row to the partial solution
-				solutionToAdd = row;
+				// The solution is an array of integers, that stores the rows of the matrix
+				// corresponding to the choices in the
+				// sudoku. Thus we will keep track of a solution to add via this variable.
+				// add the row to the partial solution
+				Integer solutionToAdd = row;
 				partialSolution.add(solutionToAdd);
 
 				// for all columns in that row that have a 1 in them, remove it
 				for (Integer col : uncoveredCols) {
-					if (matrix[row][col] == 1) {
+					if (exactCoverMatrix[row][col] == 1) {
 						colsRemovedThisCall.add(col);
 
 						// also remove all of the rows in those columns that have a 1 in them
 						for (Integer otherRow : uncoveredRows) {
-							if (matrix[otherRow][col] == 1) {
+							if (exactCoverMatrix[otherRow][col] == 1) {
 								rowsRemovedThisCall.add(otherRow);
 							}
 						}
@@ -209,9 +202,8 @@ public class AlgorXSolver extends StdSudokuSolver {
 		return false;
 	}
 
-	// Method that finds the column with the least number of ones. Used because the
-	// algorithm states it is more efficient
-	// this way.
+	// Method that finds the column with the least number of ones. Used because of the heuristic that
+	// lets the algorithm find dead ends quicker once selecting columns with the smallest number of ones.
 	private int columnLeastOnes(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols) {
 		int columnToReturn = -1;
 		int min = numRows;
@@ -219,7 +211,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 		for (Integer col : uncoveredCols) {
 			int count = 0;
 			for (Integer row : uncoveredRows) {
-				count += matrix[row][col];
+				count += exactCoverMatrix[row][col];
 			}
 
 			if (count < min) {
@@ -293,30 +285,39 @@ public class AlgorXSolver extends StdSudokuSolver {
 
 	}
 
-	public void fillRowColumnConstraintPart() {
+	// This method fills the first constraints, which are the row-column constraints. 
+	// It goes through every n values and fills them up with 1s before incrementing to the next column,
+	// until all of the rows have been filled.
+	private void fillRowColumnConstraintPart() {
 		int column = 0;
 		for (int rowStart = 0; rowStart < numRows; rowStart += size) {
-			addCellConstraint(column, rowStart);
-			column++;
+			addRowColumnConstraint(column, rowStart);
+			++column;
 		}
 	}
 
-	public void addCellConstraint(int column, int rowStart) {
+	// Method for adding in the individual 1 value.
+	private void addRowColumnConstraint(int column, int rowStart) {
 		for (int i = rowStart; i < rowStart + size; i++) {
-			matrix[i][column] = 1;
+			exactCoverMatrix[i][column] = 1;
 		}
 	}
 
-	public void fillRowValueConstraintPart() {
+	// Method fills in the second constraints, which is the row-value constraints of the exact cover sudoku matrix.
+	// It starts at every n^2 position as that's when it changes in column index.
+	private void fillRowValueConstraintPart() {
+		
+		// Starts at the n^2 column index because it's the second portion of constraints
 		int startOfColumns = sizesq;
 
 		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
-			addRowConstraint(startOfColumns, startOfRows);
+			addRowValueConstraint(startOfColumns, startOfRows);
 			startOfColumns += size;
 		}
 	}
 
-	public void addRowConstraint(int startOfColumns, int startOfRows) {
+	// Method adds in the individual 1s in a straight diagonal line pattern, only doing n ones.
+	private void addRowValueConstraint(int startOfColumns, int startOfRows) {
 		int column = startOfColumns;
 		int maxNumRow = startOfRows + sizesq;
 		int maxNumCol = startOfColumns + size;
@@ -326,36 +327,44 @@ public class AlgorXSolver extends StdSudokuSolver {
 				startOfColumns = column;
 			}
 
-			matrix[i][startOfColumns] = 1;
+			exactCoverMatrix[i][startOfColumns] = 1;
 			startOfColumns++;
 		}
 	}
 
-	public void fillColumnValueConstraintPart() {
+	// Method adds the third constraints of the matrix, which are the column value constraints.
+	// It starts the pattern at every n^2 position, doing n^2 ones.
+	private void fillColumnValueConstraintPart() {
+		
+		// starts at 2 * n^2 column index because it's the third portion of constraints
 		int startOfColumns = sizesq * 2;
 
 		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
-			addColumnConstraint(startOfColumns, startOfRows);
+			addColumnValueConstraint(startOfColumns, startOfRows);
 		}
 	}
 
-	public void addColumnConstraint(int startOfColumns, int startOfRows) {
+	// Method for adding the individual ones. This method is the one which does the long diagonal line pattern.
+	private void addColumnValueConstraint(int startOfColumns, int startOfRows) {
 		int maxNumCol = startOfColumns + sizesq;
 		for (int i = startOfColumns; i < maxNumCol; ++i) {
-			matrix[startOfRows][i] = 1;
-			startOfRows++;
+			exactCoverMatrix[startOfRows][i] = 1;
+			++startOfRows;
 		}
 	}
 
-	public void fillBoxValueConstraintPart() {
+	// final method for filling in the last constraints of the exact cover sudoku matrix. Responsible for the box value
+	// constraints. Does the same pattern square root of n times, with each iteration shifting it to the next area in columns.
+	private void fillBoxValueConstraintPart() {
 
+		// Starts at the 3 * n^2 column index because it's the fourth portion of constraints.
 		int startOfColumns = sizesq * 3;
 		int startOfRows = 0;
 		int increment = sizesq * boxSize;
 
 		for (int i = 0; i < numRows; i += increment) {
 			for (int j = 0; j < boxSize; j++) {
-				addBoxConstraint(startOfColumns, startOfRows);
+				addBoxValueConstraint(startOfColumns, startOfRows);
 
 				startOfRows += sizesq;
 			}
@@ -364,7 +373,8 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 	}
 
-	public void addBoxConstraint(int startOfColumns, int startOfRows) {
+	// Method that adds the individual ones into each straight diagonal line.
+	private void addBoxValueConstraint(int startOfColumns, int startOfRows) {
 		int column = startOfColumns;
 		int maxNumRow = startOfRows + sizesq;
 		int maxNumCol = startOfColumns + size;
@@ -372,7 +382,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 		for (int i = startOfRows; i < maxNumRow; ++i) {
 			if (startOfColumns == maxNumCol) {
 				startOfColumns = column;
-				count++;
+				++count;
 			}
 
 			if (count >= boxSize) {
@@ -382,8 +392,8 @@ public class AlgorXSolver extends StdSudokuSolver {
 				count = 0;
 			}
 
-			matrix[i][startOfColumns] = 1;
-			startOfColumns++;
+			exactCoverMatrix[i][startOfColumns] = 1;
+			++startOfColumns;
 		}
 	}
 
