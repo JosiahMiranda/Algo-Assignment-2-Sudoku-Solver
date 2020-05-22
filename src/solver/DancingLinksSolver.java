@@ -114,7 +114,7 @@ public class DancingLinksSolver extends StdSudokuSolver {
 				adjacentCol.column.cover();
 			}
 
-			// Then we call the recursive call. Return true if it is true.
+			// Then we call the recursive call.
 			if (sudokuSolve()) {
 				return true;
 			}
@@ -181,30 +181,54 @@ public class DancingLinksSolver extends StdSudokuSolver {
 	private void createMatrix() {
 
 		// Filling in the portion of the matrix that has to do with the cell constraints
-		fillRowColumnConstraintPart();
-
-		// Filling in the portion of the matrix that has to do with the row constraints
-		fillRowValueConstraintPart();
-
-		// Filling in the portion of the matrix that has to do with the column
-		// constraints
-		fillColumnValueConstraintPart();
-
-		// Filling in the portion of the matrix that has to do with the box constraints
-		fillBoxValueConstraintPart();
-
-	}
-
-	// This method fills the first constraints, which are the row-column constraints. 
-	// It goes through every n values and fills them up with 1s before incrementing to the next column,
-	// until all of the rows have been filled.
-	private void fillRowColumnConstraintPart() {
 		int column = 0;
 		for (int rowStart = 0; rowStart < numRows; rowStart += size) {
 			addRowColumnConstraint(column, rowStart);
 			++column;
 		}
+
+		// Filling in the portion of the matrix that has to do with the row constraints
+		// Starts at the n^2 column index because it's the second portion of constraints
+		int startOfColumns = sizesq;
+
+		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
+			addRowValueConstraint(startOfColumns, startOfRows);
+			startOfColumns += size;
+		}
+
+		// Filling in the portion of the matrix that has to do with the column
+		// constraints
+		// starts at 2 * n^2 column index because it's the third portion of constraints
+		startOfColumns = sizesq * 2;
+
+		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
+			addColumnValueConstraint(startOfColumns, startOfRows);
+		}
+
+		// Filling in the portion of the matrix that has to do with the box constraints
+		// Starts at the 3 * n^2 column index because it's the fourth portion of
+		// constraints.
+		startOfColumns = sizesq * 3;
+		int startOfRows = 0;
+		int increment = sizesq * boxSize;
+
+		for (int i = 0; i < numRows; i += increment) {
+			for (int j = 0; j < boxSize; j++) {
+				addBoxValueConstraint(startOfColumns, startOfRows);
+
+				startOfRows += sizesq;
+			}
+
+			startOfColumns += (size * boxSize);
+		}
+
 	}
+
+	// This method fills the first constraints, which are the row-column
+	// constraints.
+	// It goes through every n values and fills them up with 1s before incrementing
+	// to the next column,
+	// until all of the rows have been filled.
 
 	// Method for adding in the individual 1 value.
 	private void addRowColumnConstraint(int column, int rowStart) {
@@ -213,20 +237,12 @@ public class DancingLinksSolver extends StdSudokuSolver {
 		}
 	}
 
-	// Method fills in the second constraints, which is the row-value constraints of the exact cover sudoku matrix.
+	// Method fills in the second constraints, which is the row-value constraints of
+	// the exact cover sudoku matrix.
 	// It starts at every n^2 position as that's when it changes in column index.
-	private void fillRowValueConstraintPart() {
-		
-		// Starts at the n^2 column index because it's the second portion of constraints
-		int startOfColumns = sizesq;
 
-		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
-			addRowValueConstraint(startOfColumns, startOfRows);
-			startOfColumns += size;
-		}
-	}
-
-	// Method adds in the individual 1s in a straight diagonal line pattern, only doing n ones.
+	// Method adds in the individual 1s in a straight diagonal line pattern, only
+	// doing n ones.
 	private void addRowValueConstraint(int startOfColumns, int startOfRows) {
 		int column = startOfColumns;
 		int maxNumRow = startOfRows + sizesq;
@@ -242,19 +258,12 @@ public class DancingLinksSolver extends StdSudokuSolver {
 		}
 	}
 
-	// Method adds the third constraints of the matrix, which are the column value constraints.
+	// Method adds the third constraints of the matrix, which are the column value
+	// constraints.
 	// It starts the pattern at every n^2 position, doing n^2 ones.
-	private void fillColumnValueConstraintPart() {
-		
-		// starts at 2 * n^2 column index because it's the third portion of constraints
-		int startOfColumns = sizesq * 2;
 
-		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
-			addColumnValueConstraint(startOfColumns, startOfRows);
-		}
-	}
-
-	// Method for adding the individual ones. This method is the one which does the long diagonal line pattern.
+	// Method for adding the individual ones. This method is the one which does the
+	// long diagonal line pattern.
 	private void addColumnValueConstraint(int startOfColumns, int startOfRows) {
 		int maxNumCol = startOfColumns + sizesq;
 		for (int i = startOfColumns; i < maxNumCol; ++i) {
@@ -263,25 +272,10 @@ public class DancingLinksSolver extends StdSudokuSolver {
 		}
 	}
 
-	// final method for filling in the last constraints of the exact cover sudoku matrix. Responsible for the box value
-	// constraints. Does the same pattern square root of n times, with each iteration shifting it to the next area in columns.
-	private void fillBoxValueConstraintPart() {
-
-		// Starts at the 3 * n^2 column index because it's the fourth portion of constraints.
-		int startOfColumns = sizesq * 3;
-		int startOfRows = 0;
-		int increment = sizesq * boxSize;
-
-		for (int i = 0; i < numRows; i += increment) {
-			for (int j = 0; j < boxSize; j++) {
-				addBoxValueConstraint(startOfColumns, startOfRows);
-
-				startOfRows += sizesq;
-			}
-
-			startOfColumns += (size * boxSize);
-		}
-	}
+	// final method for filling in the last constraints of the exact cover sudoku
+	// matrix. Responsible for the box value
+	// constraints. Does the same pattern square root of n times, with each
+	// iteration shifting it to the next area in columns.
 
 	// Method that adds the individual ones into each straight diagonal line.
 	private void addBoxValueConstraint(int startOfColumns, int startOfRows) {

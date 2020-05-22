@@ -91,7 +91,8 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 	}
 
-	// Covering all of the columns and rows that should be covered due to the initial grid.
+	// Covering all of the columns and rows that should be covered due to the
+	// initial grid.
 	private void setInitialPartialSolution() {
 		for (int row = 0; row < size; row++) {
 			for (int col = 0; col < size; col++) {
@@ -124,7 +125,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 
 	// THE SOLVE METHOD THAT TOOK ME LITERAL DAYS TO GET WORKING IF THIS SCREWS UP
 	// IM GONNA FLIP
-	private boolean sudokuSolve(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, Set<Integer> partialSolution) {		
+	private boolean sudokuSolve(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols, Set<Integer> partialSolution) {
 
 		// Base case. If the uncovered cols size is 0 then the matrix being worked with
 		// is empty so return true.
@@ -144,7 +145,7 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 
 		Integer column = columnLeastOnes(uncoveredRows, uncoveredCols);
-		
+
 		// Choose a row in the matrix
 		for (Integer row : uncoveredRows) {
 			if (exactCoverMatrix[row][column] == 1) {
@@ -202,8 +203,10 @@ public class AlgorXSolver extends StdSudokuSolver {
 		return false;
 	}
 
-	// Method that finds the column with the least number of ones. Used because of the heuristic that
-	// lets the algorithm find dead ends quicker once selecting columns with the smallest number of ones.
+	// Method that finds the column with the least number of ones. Used because of
+	// the heuristic that
+	// lets the algorithm find dead ends quicker once selecting columns with the
+	// smallest number of ones.
 	private int columnLeastOnes(Set<Integer> uncoveredRows, Set<Integer> uncoveredCols) {
 		int columnToReturn = -1;
 		int min = numRows;
@@ -271,30 +274,54 @@ public class AlgorXSolver extends StdSudokuSolver {
 	private void createMatrix() {
 
 		// Filling in the portion of the matrix that has to do with the cell constraints
-		fillRowColumnConstraintPart();
-
-		// Filling in the portion of the matrix that has to do with the row constraints
-		fillRowValueConstraintPart();
-
-		// Filling in the portion of the matrix that has to do with the column
-		// constraints
-		fillColumnValueConstraintPart();
-
-		// Filling in the portion of the matrix that has to do with the box constraints
-		fillBoxValueConstraintPart();
-
-	}
-
-	// This method fills the first constraints, which are the row-column constraints. 
-	// It goes through every n values and fills them up with 1s before incrementing to the next column,
-	// until all of the rows have been filled.
-	private void fillRowColumnConstraintPart() {
 		int column = 0;
 		for (int rowStart = 0; rowStart < numRows; rowStart += size) {
 			addRowColumnConstraint(column, rowStart);
 			++column;
 		}
+
+		// Filling in the portion of the matrix that has to do with the row constraints
+		// Starts at the n^2 column index because it's the second portion of constraints
+		int startOfColumns = sizesq;
+
+		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
+			addRowValueConstraint(startOfColumns, startOfRows);
+			startOfColumns += size;
+		}
+
+		// Filling in the portion of the matrix that has to do with the column
+		// constraints
+		// starts at 2 * n^2 column index because it's the third portion of constraints
+		startOfColumns = sizesq * 2;
+
+		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
+			addColumnValueConstraint(startOfColumns, startOfRows);
+		}
+
+		// Filling in the portion of the matrix that has to do with the box constraints
+		// Starts at the 3 * n^2 column index because it's the fourth portion of
+		// constraints.
+		startOfColumns = sizesq * 3;
+		int startOfRows = 0;
+		int increment = sizesq * boxSize;
+
+		for (int i = 0; i < numRows; i += increment) {
+			for (int j = 0; j < boxSize; j++) {
+				addBoxValueConstraint(startOfColumns, startOfRows);
+
+				startOfRows += sizesq;
+			}
+
+			startOfColumns += (size * boxSize);
+		}
+
 	}
+
+	// This method fills the first constraints, which are the row-column
+	// constraints.
+	// It goes through every n values and fills them up with 1s before incrementing
+	// to the next column,
+	// until all of the rows have been filled.
 
 	// Method for adding in the individual 1 value.
 	private void addRowColumnConstraint(int column, int rowStart) {
@@ -303,20 +330,12 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 	}
 
-	// Method fills in the second constraints, which is the row-value constraints of the exact cover sudoku matrix.
+	// Method fills in the second constraints, which is the row-value constraints of
+	// the exact cover sudoku matrix.
 	// It starts at every n^2 position as that's when it changes in column index.
-	private void fillRowValueConstraintPart() {
-		
-		// Starts at the n^2 column index because it's the second portion of constraints
-		int startOfColumns = sizesq;
 
-		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
-			addRowValueConstraint(startOfColumns, startOfRows);
-			startOfColumns += size;
-		}
-	}
-
-	// Method adds in the individual 1s in a straight diagonal line pattern, only doing n ones.
+	// Method adds in the individual 1s in a straight diagonal line pattern, only
+	// doing n ones.
 	private void addRowValueConstraint(int startOfColumns, int startOfRows) {
 		int column = startOfColumns;
 		int maxNumRow = startOfRows + sizesq;
@@ -332,19 +351,12 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 	}
 
-	// Method adds the third constraints of the matrix, which are the column value constraints.
+	// Method adds the third constraints of the matrix, which are the column value
+	// constraints.
 	// It starts the pattern at every n^2 position, doing n^2 ones.
-	private void fillColumnValueConstraintPart() {
-		
-		// starts at 2 * n^2 column index because it's the third portion of constraints
-		int startOfColumns = sizesq * 2;
 
-		for (int startOfRows = 0; startOfRows < numRows; startOfRows += sizesq) {
-			addColumnValueConstraint(startOfColumns, startOfRows);
-		}
-	}
-
-	// Method for adding the individual ones. This method is the one which does the long diagonal line pattern.
+	// Method for adding the individual ones. This method is the one which does the
+	// long diagonal line pattern.
 	private void addColumnValueConstraint(int startOfColumns, int startOfRows) {
 		int maxNumCol = startOfColumns + sizesq;
 		for (int i = startOfColumns; i < maxNumCol; ++i) {
@@ -353,25 +365,10 @@ public class AlgorXSolver extends StdSudokuSolver {
 		}
 	}
 
-	// final method for filling in the last constraints of the exact cover sudoku matrix. Responsible for the box value
-	// constraints. Does the same pattern square root of n times, with each iteration shifting it to the next area in columns.
-	private void fillBoxValueConstraintPart() {
-
-		// Starts at the 3 * n^2 column index because it's the fourth portion of constraints.
-		int startOfColumns = sizesq * 3;
-		int startOfRows = 0;
-		int increment = sizesq * boxSize;
-
-		for (int i = 0; i < numRows; i += increment) {
-			for (int j = 0; j < boxSize; j++) {
-				addBoxValueConstraint(startOfColumns, startOfRows);
-
-				startOfRows += sizesq;
-			}
-
-			startOfColumns += (size * boxSize);
-		}
-	}
+	// final method for filling in the last constraints of the exact cover sudoku
+	// matrix. Responsible for the box value
+	// constraints. Does the same pattern square root of n times, with each
+	// iteration shifting it to the next area in columns.
 
 	// Method that adds the individual ones into each straight diagonal line.
 	private void addBoxValueConstraint(int startOfColumns, int startOfRows) {
