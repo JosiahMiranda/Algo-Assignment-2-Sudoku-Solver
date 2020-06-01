@@ -1,8 +1,10 @@
 package solver;
 
 public class DancingLinksNode {
+	// variables used for each node. Has a column and links to all directions.
 	ColumnNode column;
 	DancingLinksNode up, down, left, right;
+	// stores real row index (matrix row index) so that the row, column, and value can be retrieved.
 	int realRowIndex;
 
 	// Default constructor.

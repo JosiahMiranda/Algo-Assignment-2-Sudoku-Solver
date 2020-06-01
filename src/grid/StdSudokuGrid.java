@@ -40,12 +40,14 @@ public class StdSudokuGrid extends SudokuGrid {
 
 		String line;
 
+		// simply reading in information from the file and storing them in variables to be used
 		line = reader.readLine();
 		size = Integer.parseInt(line);
 
+		// values is an array that stores the different values they could be
 		values = new int[size];
 		grid = new int[size][size];
-
+		
 		line = reader.readLine();
 		String[] strValues = line.split(" ");
 
@@ -54,12 +56,14 @@ public class StdSudokuGrid extends SudokuGrid {
 			values[i] = valueToAdd;
 		}
 
+		// automatically initialise all spaces in grid as empty (-1)
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
 				grid[row][col] = -1;
 			}
 		}
 
+		// now setting the already provided values into the sudoku grid
 		while ((line = reader.readLine()) != null) {
 			String[] tokens = line.split(" ");
 			String[] tuple = tokens[0].split(",");
@@ -78,23 +82,18 @@ public class StdSudokuGrid extends SudokuGrid {
 
 	@Override
 	public void outputGrid(String filename) throws FileNotFoundException, IOException {
-		// TODO
-
-		try {
-			PrintWriter outWriter = new PrintWriter(new FileWriter(filename), true);
-			outWriter.print(toString());
-			outWriter.close();
-
-		} catch (FileNotFoundException ex) {
-			System.err.println(String.format("File: %s not found.", filename));
-		}
+		
+		// simply outputting the contents of the grid onto the specified file
+		PrintWriter outWriter = new PrintWriter(new FileWriter(filename), true);
+		outWriter.print(toString());
+		outWriter.close();
 
 	} // end of outputBoard()
 
 	@Override
 	public String toString() {
-		// TODO
 
+		// replace -1s (empty spaces) with '.' just to make it a bit more readable.
 		String output = "";
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
@@ -117,6 +116,7 @@ public class StdSudokuGrid extends SudokuGrid {
 	@Override
 	public boolean validate() {
 
+		// ensures every value is valid
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
 				if (!validCell(row, col)) {
@@ -132,6 +132,7 @@ public class StdSudokuGrid extends SudokuGrid {
 
 		int value = grid[row][col];
 
+		// ensures that the value is not in the same row more than once.
 		int numValues = 0;
 		for (int i = 0; i < size; i++) {
 			if (grid[row][i] == value) {
@@ -142,6 +143,7 @@ public class StdSudokuGrid extends SudokuGrid {
 			}
 		}
 
+		// ensures that the value is not in the same column more than once.
 		numValues = 0;
 		for (int i = 0; i < size; i++) {
 			if (grid[i][col] == value) {
@@ -152,6 +154,7 @@ public class StdSudokuGrid extends SudokuGrid {
 			}
 		}
 
+		// ensures that the value is not in the same box more than once.
 		int squareRoot = (int) Math.sqrt(size);
 		int blockRowStartIndex = row - row % squareRoot;
 		int blockColStartIndex = col - col % squareRoot;
@@ -168,6 +171,7 @@ public class StdSudokuGrid extends SudokuGrid {
 			}
 		}
 
+		// if this is reached than all of the constraints have been met so return true.
 		return true;
 	}
 

@@ -4,8 +4,6 @@
 
 package solver;
 
-import java.util.Arrays;
-
 import grid.KillerSudokuGrid;
 import grid.SudokuGrid;
 
@@ -30,10 +28,7 @@ public class KillerBackTrackingSolver extends KillerSudokuSolver
     	int size = killerGrid.size;
     	int[][] intGrid = killerGrid.grid;
     	int[] values = killerGrid.values;
-    	// sorting the array makes it faster to solve
-    	Arrays.sort(values);
     	Cage[] cages = killerGrid.cages;
-    		
     	if (sudokuSolve(intGrid, values, size, cages, 0)) {
     		return true;
     	}
@@ -158,10 +153,6 @@ public class KillerBackTrackingSolver extends KillerSudokuSolver
  					// If it doesn't return false.
  					return false;
  				}
- 				
- 			} else if (numEmpties == 0) {
- 				// If the num of empties is 0, then we're trying to add to a cage that's already full. return false
- 				return false;
  				
  			} else {
  				// If the num of empties doesn't equal to one, meaning there are more empty values,

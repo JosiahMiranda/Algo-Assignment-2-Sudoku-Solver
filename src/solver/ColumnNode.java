@@ -1,6 +1,7 @@
 package solver;
 
 public class ColumnNode extends DancingLinksNode{
+	// every column node has an id and a size that can be changed.
 	String id;
 	int size;
 	
@@ -11,14 +12,17 @@ public class ColumnNode extends DancingLinksNode{
 		size = 0;
 	}
 	
+	// method to cover the column
 	public void cover() {
 		
+		// calls the method of dancing links node
 		coverColumnWise();
 		
+		// then proceeds to cover every row in this column
 		for (DancingLinksNode row = down; row != this; row = row.down) {
 			
 			for (DancingLinksNode col = row.right; col != row; col = col.right) {
-				
+				// and covers that row
 				--col.column.size;
 				col.coverRowWise();
 				
@@ -30,10 +34,11 @@ public class ColumnNode extends DancingLinksNode{
 	
 	public void uncover() {
 		
+		// proceeds to every row in this column
 		for (DancingLinksNode row = up; row != this; row = row.up) {
 			
 			for (DancingLinksNode col = row.left; col != row; col = col.left) {
-				
+				// uncovers them
 				++col.column.size;
 				col.unCoverRowWise();
 				
@@ -41,7 +46,10 @@ public class ColumnNode extends DancingLinksNode{
 			
 		}
 		
+		// calls method of dancing links node to uncover the column completely
 		unCoverColumnWise();
+		
+		// strictly done in reverse order from when it covered them!
 	}
 	
 }

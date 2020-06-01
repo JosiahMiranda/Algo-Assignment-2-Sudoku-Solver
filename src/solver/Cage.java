@@ -1,6 +1,9 @@
 package solver;
 
 public class Cage {
+	
+	// class for the killer cages in killer sudoku.
+	// has a sum and then all of the tuples, so cells inside of the cage.
 
 	public int sum;
 	public Tuple[] tuples;

@@ -42,7 +42,7 @@ public class KillerSudokuGrid extends SudokuGrid {
 
 	@Override
 	public void initGrid(String filename) throws FileNotFoundException, IOException {
-		// TODO
+
 		BufferedReader reader = new BufferedReader(new FileReader(filename));
 
 		String line;
@@ -103,25 +103,19 @@ public class KillerSudokuGrid extends SudokuGrid {
 
 	@Override
 	public void outputGrid(String filename) throws FileNotFoundException, IOException {
-		// TODO
 
-		// Just print the tostring
-		try {
-			PrintWriter outWriter = new PrintWriter(new FileWriter(filename), true);
-			outWriter.print(toString());
-			outWriter.close();
-
-		} catch (FileNotFoundException ex) {
-			System.err.println(String.format("File: %s not found.", filename));
-		}
+		// simply print the toString to whatever file is specified.
+		PrintWriter outWriter = new PrintWriter(new FileWriter(filename), true);
+		outWriter.print(toString());
+		outWriter.close();
 
 	} // end of outputBoard()
 
 	// Print out the grid. If it's empty, replace it with a '.' rather than a '-1'
 	@Override
 	public String toString() {
-		// TODO
 
+		// replacing -1s (empty spaces) with '.' to make more readable
 		String output = "";
 		for (int row = 0; row < size; ++row) {
 			for (int col = 0; col < size; ++col) {
@@ -152,7 +146,7 @@ public class KillerSudokuGrid extends SudokuGrid {
 				}
 			}
 		}
-		
+
 		// Then check that every cage is valid
 		for (Cage cage : cages) {
 			int sum = 0;
@@ -175,8 +169,10 @@ public class KillerSudokuGrid extends SudokuGrid {
 
 	public boolean validCell(int row, int col) {
 
+		// check that every value meets the constraints of sudoku.
 		int value = grid[row][col];
 
+		// ensures that the value is not in the same row more than once.
 		int numValues = 0;
 		for (int i = 0; i < size; i++) {
 			if (grid[row][i] == value) {
@@ -187,6 +183,7 @@ public class KillerSudokuGrid extends SudokuGrid {
 			}
 		}
 
+		// ensures that the value is not in the same column more than once.
 		numValues = 0;
 		for (int i = 0; i < size; i++) {
 			if (grid[i][col] == value) {
@@ -196,6 +193,8 @@ public class KillerSudokuGrid extends SudokuGrid {
 				return false;
 			}
 		}
+		
+		// ensures that the value is not in the same box more than once.
 
 		int squareRoot = (int) Math.sqrt(size);
 		int blockRowStartIndex = row - row % squareRoot;
@@ -213,6 +212,7 @@ public class KillerSudokuGrid extends SudokuGrid {
 			}
 		}
 
+		// if this is reached, all the constraints are met
 		return true;
 	}
 
